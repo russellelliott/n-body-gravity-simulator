@@ -383,7 +383,15 @@ export const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
         if (vectorLine) vectorLine.visible = false;
       }
     }
-  }, [bodies, settings.showTrails, settings.showVectors, createBodyMeshGroup]);
+   }, [bodies, settings.showTrails, settings.showVectors, createBodyMeshGroup]);
+
+   // Force initial render as soon as bodies are added to the scene.
+   // This guarantees WebGL draws the meshes on first paint without waiting for the rAF loop to fire its next frame.
+   useEffect(() => {
+     if (bodies.length > 0 && sceneRef.current && cameraRef.current && rendererRef.current) {
+       rendererRef.current.render(sceneRef.current, cameraRef.current);
+     }
+   }, [bodies]);
 
   // Handle Collisions & Audio trigger
   useEffect(() => {
@@ -397,18 +405,18 @@ export const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     }
   }, [collisions, settings.soundEnabled]);
 
-  // Main Render Loop
-  useEffect(() => {
-    let animId: number;
+   // Main Render Loop - starts immediately after setup, uses refs for latest values
+   useEffect(() => {
+     let animId: number;
 
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
+     const animate = () => {
+       animId = requestAnimationFrame(animate);
 
-      const scene = sceneRef.current;
-      const camera = cameraRef.current;
-      const renderer = rendererRef.current;
+       const scene = sceneRef.current;
+       const camera = cameraRef.current;
+       const renderer = rendererRef.current;
 
-      if (!scene || !camera || !renderer) return;
+       if (!scene || !camera || !renderer) return;
 
       const selectedBody = bodies.find(b => b.id === selectedBodyId);
 

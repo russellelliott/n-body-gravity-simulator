@@ -7,17 +7,21 @@ import { RightSidebar } from './components/RightSidebar';
 import { BottomControlBar } from './components/BottomControlBar';
 import { TopHUD } from './components/TopHUD';
 import { PresetsModal } from './components/PresetsModal';
+import { InitialPresetsOverlay } from './components/InitialPresetsOverlay';
 
 export default function App() {
-  // Default Initial Preset (Solar System)
-  const [bodies, setBodies] = useState<CelestialBody[]>(() => PRESETS[0].generate(1.0));
-  const [selectedBodyId, setSelectedBodyId] = useState<string | null>(null);
-  const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [cameraMode, setCameraMode] = useState<CameraViewMode>('free');
-  const [isPresetsOpen, setIsPresetsOpen] = useState<boolean>(false);
-  const [collisions, setCollisions] = useState<CollisionEvent[]>([]);
+   // Initial load gate — shows presets overlay until user picks one
+   const [hasLoadedFirstPreset, setHasLoadedFirstPreset] = useState<boolean>(false);
 
-  // Simulation Settings
+   // Placeholder initial state — empty while overlay blocks view; genuinely changes when any preset is selected
+   const [bodies, setBodies] = useState<CelestialBody[]>([]);
+   const [selectedBodyId, setSelectedBodyId] = useState<string | null>(null);
+   const [isPaused, setIsPaused] = useState<boolean>(false);
+   const [cameraMode, setCameraMode] = useState<CameraViewMode>('free');
+   const [isPresetsOpen, setIsPresetsOpen] = useState<boolean>(false);
+   const [collisions, setCollisions] = useState<CollisionEvent[]>([]);
+
+   // Simulation Settings
   const [settings, setSettings] = useState<SimulationSettings>({
     gConstant: 1.0,
     timeStep: 0.15,
@@ -34,9 +38,9 @@ export default function App() {
     showLabels: true,
     soundEnabled: true,
     maxBodyLimit: 250
-  });
+   });
 
-  // Spawn Creator Configuration
+   // Spawn Creator Configuration
   const [spawnConfig, setSpawnConfig] = useState<SpawnConfig>({
     name: 'Planet',
     mass: 1.0,
@@ -47,12 +51,12 @@ export default function App() {
     ringRadius: 50,
     ringCount: 35,
     initialSpeedMult: 1.0
-  });
+   });
 
-  // Real-Time System Stats
+   // Real-Time System Stats
   const [stats, setStats] = useState<SystemStats>(() => computeSystemStats(bodies, 1.0));
 
-  // Physics Animation Loop
+   // Physics Animation Loop
   const animFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(performance.now());
   const fpsCounterRef = useRef<{ frames: number; lastTime: number }>({ frames: 0, lastTime: performance.now() });
@@ -64,64 +68,64 @@ export default function App() {
       });
       return nextBodies;
     });
-  }, [settings]);
+   }, [settings]);
 
   useEffect(() => {
     const loop = (now: number) => {
-      // Calculate FPS
+       // Calculate FPS
       fpsCounterRef.current.frames++;
       if (now - fpsCounterRef.current.lastTime >= 1000) {
         const currentFps = Math.round((fpsCounterRef.current.frames * 1000) / (now - fpsCounterRef.current.lastTime));
         setStats(s => ({ ...s, fps: currentFps }));
         fpsCounterRef.current.frames = 0;
         fpsCounterRef.current.lastTime = now;
-      }
+       }
 
       if (!isPaused) {
         runPhysicsStep();
-      }
+       }
 
-      // Update System Stats
+       // Update System Stats
       setStats(prev => ({
-        ...computeSystemStats(bodies, settings.gConstant),
+         ...computeSystemStats(bodies, settings.gConstant),
         fps: prev.fps
-      }));
+       }));
 
       lastTimeRef.current = now;
       animFrameRef.current = requestAnimationFrame(loop);
-    };
+     };
 
     animFrameRef.current = requestAnimationFrame(loop);
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
-  }, [isPaused, bodies, settings, runPhysicsStep]);
+     };
+   }, [isPaused, bodies, settings, runPhysicsStep]);
 
-  // Selected Body Reference
+   // Selected Body Reference
   const selectedBody = bodies.find(b => b.id === selectedBodyId) || null;
 
-  // Handlers
+   // Handlers
   const handleUpdateBody = (updated: CelestialBody) => {
     setBodies(prev => prev.map(b => (b.id === updated.id ? updated : b)));
-  };
+   };
 
   const handleDeleteBody = (id: string) => {
     setBodies(prev => prev.filter(b => b.id !== id));
     if (selectedBodyId === id) setSelectedBodyId(null);
-  };
+   };
 
   const handleDuplicateBody = (body: CelestialBody) => {
     const copy: CelestialBody = {
-      ...body,
+       ...body,
       id: `body_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       name: `${body.name} Copy`,
       position: { x: body.position.x + body.radius * 2.5, y: body.position.y, z: body.position.z + body.radius * 2.5 },
       trailHistory: [],
       createdAt: Date.now()
-    };
+     };
     setBodies(prev => [...prev, copy]);
     setSelectedBodyId(copy.id);
-  };
+   };
 
   const handleExplodeBody = (body: CelestialBody) => {
     handleDeleteBody(body.id);
@@ -141,23 +145,23 @@ export default function App() {
           x: body.position.x + Math.cos(angle) * (body.radius * 1.5),
           y: body.position.y + (Math.random() - 0.5) * 2,
           z: body.position.z + Math.sin(angle) * (body.radius * 1.5)
-        },
+         },
         velocity: {
           x: body.velocity.x + Math.cos(angle) * speed,
           y: body.velocity.y + (Math.random() - 0.5) * speed,
           z: body.velocity.z + Math.sin(angle) * speed
-        },
+         },
         color: '#ff7733',
         isFixed: false,
         isFragment: true,
         trailHistory: [],
         type: 'fragment',
         createdAt: Date.now()
-      });
-    }
+       });
+     }
 
     setBodies(prev => [...prev, ...frags]);
-  };
+   };
 
   const handleSpawnRingDisk = (count: number, radius: number, mass: number, color: string) => {
     const centerAttractor = bodies.find(b => b.id === selectedBodyId) ||
@@ -174,7 +178,7 @@ export default function App() {
         x: centerAttractor.position.x + Math.cos(angle) * r,
         y: centerAttractor.position.y + (Math.random() - 0.5) * 2,
         z: centerAttractor.position.z + Math.sin(angle) * r
-      };
+       };
 
       const vel = calculateOrbitalVelocity(pos, centerAttractor, settings.gConstant);
 
@@ -191,86 +195,94 @@ export default function App() {
         trailHistory: [],
         type: 'rocky',
         createdAt: Date.now()
-      });
-    }
+       });
+     }
 
     setBodies(prev => [...prev, ...ringBodies]);
-  };
+   };
 
   const handleLoadPreset = (preset: Preset) => {
     const newBodies = preset.generate(settings.gConstant);
     setBodies(newBodies);
     setSelectedBodyId(null);
     setCameraMode('free');
-  };
+    if (!hasLoadedFirstPreset) {
+      setHasLoadedFirstPreset(true);
+     }
+   };
 
   const handleQuickLoadPreset = (presetId: string) => {
     const found = PRESETS.find(p => p.id === presetId);
     if (found) handleLoadPreset(found);
-  };
+   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-slate-950 font-sans flex">
-      {/* 3D WebGL Physics Canvas */}
-      <div className="relative flex-1 h-full">
-        <SimulationCanvas
-          bodies={bodies}
-          settings={settings}
+       <div className="relative w-screen h-screen overflow-hidden bg-slate-950 font-sans flex">
+        {/* Three.js simulation canvas always mounted — initializes WebGL on page load */}
+         <div className="relative flex-1 h-full z-0">
+           <SimulationCanvas
+            bodies={bodies}
+            settings={settings}
+            spawnConfig={spawnConfig}
+            selectedBodyId={selectedBodyId}
+            cameraMode={cameraMode}
+            onSelectBody={setSelectedBodyId}
+            onAddBody={(newBody) => setBodies(prev => [...prev, newBody])}
+            collisions={collisions}
+           />
+
+           {/* Top HUD Overlay */}
+           <TopHUD
+            stats={stats}
+            cameraMode={cameraMode}
+            selectedBodyName={selectedBody?.name || null}
+            onChangeCameraMode={setCameraMode}
+            onQuickLoadPreset={handleQuickLoadPreset}
+           />
+
+           {/* Bottom Floating Control Bar */}
+           <BottomControlBar
+            isPaused={isPaused}
+            settings={settings}
+            onTogglePause={() => setIsPaused(!isPaused)}
+            onStepFrame={runPhysicsStep}
+            onUpdateSettings={(upd) => setSettings(s => ({ ...s, ...upd }))}
+            onClearAll={() => {
+              setBodies([]);
+              setSelectedBodyId(null);
+             }}
+            onOpenPresets={() => setIsPresetsOpen(true)}
+           />
+         </div>
+
+        {/* Right Column Inspector Sidebar */}
+         <RightSidebar
+          selectedBody={selectedBody}
           spawnConfig={spawnConfig}
-          selectedBodyId={selectedBodyId}
           cameraMode={cameraMode}
-          onSelectBody={setSelectedBodyId}
-          onAddBody={(newBody) => setBodies(prev => [...prev, newBody])}
-          collisions={collisions}
-        />
-
-        {/* Top HUD Overlay */}
-        <TopHUD
-          stats={stats}
-          cameraMode={cameraMode}
-          selectedBodyName={selectedBody?.name || null}
+          bodies={bodies}
+          gConstant={settings.gConstant}
+          onUpdateBody={handleUpdateBody}
+          onDeleteBody={handleDeleteBody}
+          onDuplicateBody={handleDuplicateBody}
+          onExplodeBody={handleExplodeBody}
+          onUpdateSpawnConfig={(cfg) => setSpawnConfig(c => ({ ...c, ...cfg }))}
           onChangeCameraMode={setCameraMode}
-          onQuickLoadPreset={handleQuickLoadPreset}
-        />
+          onSelectBody={setSelectedBodyId}
+          onSpawnRingDisk={handleSpawnRingDisk}
+         />
 
-        {/* Bottom Floating Control Bar */}
-        <BottomControlBar
-          isPaused={isPaused}
-          settings={settings}
-          onTogglePause={() => setIsPaused(!isPaused)}
-          onStepFrame={runPhysicsStep}
-          onUpdateSettings={(upd) => setSettings(s => ({ ...s, ...upd }))}
-          onClearAll={() => {
-            setBodies([]);
-            setSelectedBodyId(null);
-          }}
-          onOpenPresets={() => setIsPresetsOpen(true)}
-        />
-      </div>
+        {/* Presets Modal (for reloading a different preset after simulation is running) */}
+         <PresetsModal
+          isOpen={isPresetsOpen}
+          onClose={() => setIsPresetsOpen(false)}
+          onSelectPreset={handleLoadPreset}
+         />
 
-      {/* Right Column Inspector Sidebar */}
-      <RightSidebar
-        selectedBody={selectedBody}
-        spawnConfig={spawnConfig}
-        cameraMode={cameraMode}
-        bodies={bodies}
-        gConstant={settings.gConstant}
-        onUpdateBody={handleUpdateBody}
-        onDeleteBody={handleDeleteBody}
-        onDuplicateBody={handleDuplicateBody}
-        onExplodeBody={handleExplodeBody}
-        onUpdateSpawnConfig={(cfg) => setSpawnConfig(c => ({ ...c, ...cfg }))}
-        onChangeCameraMode={setCameraMode}
-        onSelectBody={setSelectedBodyId}
-        onSpawnRingDisk={handleSpawnRingDisk}
-      />
-
-      {/* Presets Modal */}
-      <PresetsModal
-        isOpen={isPresetsOpen}
-        onClose={() => setIsPresetsOpen(false)}
-        onSelectPreset={handleLoadPreset}
-      />
-    </div>
-  );
+        {/* Initial presets overlay — shown on first load, sits on top of everything */}
+         {!hasLoadedFirstPreset && (
+           <InitialPresetsOverlay onSelectPreset={handleLoadPreset} />
+         )}
+       </div>
+    );
 }
