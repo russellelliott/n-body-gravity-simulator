@@ -61,20 +61,22 @@ export const BottomControlBar: React.FC<BottomControlBarProps> = ({
         )}
       </div>
 
-      {/* Speed Slider */}
-      <div className="flex items-center gap-2 text-xs bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
-        <span className="text-slate-400 font-mono text-[11px]">Speed:</span>
-        <input
-          type="range"
-          min="0.1"
-          max="5.0"
-          step="0.1"
-          value={settings.simSpeed}
-          onChange={(e) => onUpdateSettings({ simSpeed: parseFloat(e.target.value) })}
-          className="w-16 sm:w-24 accent-amber-500 cursor-pointer"
-        />
-        <span className="font-mono text-amber-400 w-9 text-right font-bold">{settings.simSpeed.toFixed(1)}x</span>
-      </div>
+        {/* Speed Slider */}
+        <div className="flex items-center gap-2 text-xs bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
+          <span className="text-slate-400 font-mono text-[11px]">Speed:</span>
+          <input
+           type="range"
+           min="0.05"
+           max="50"
+           step="0.05"
+           value={settings.simSpeed}
+           onChange={(e) => onUpdateSettings({ simSpeed: parseFloat(e.target.value) })}
+           className="w-16 sm:w-24 accent-amber-500 cursor-pointer"
+          />
+          <span className="font-mono text-amber-400 w-12 text-right font-bold">
+            {settings.simSpeed >= 10 ? settings.simSpeed.toFixed(0) : settings.simSpeed.toFixed(2)}x
+          </span>
+        </div>
 
       {/* Gravity Constant G Slider */}
       <div className="hidden sm:flex items-center gap-2 text-xs bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
