@@ -231,14 +231,13 @@ export default function App() {
             collisions={collisions}
            />
 
-           {/* Top HUD Overlay */}
-           <TopHUD
+            {/* Top HUD Overlay */}
+            <TopHUD
             stats={stats}
             cameraMode={cameraMode}
             selectedBodyName={selectedBody?.name || null}
             onChangeCameraMode={setCameraMode}
-            onQuickLoadPreset={handleQuickLoadPreset}
-           />
+            />
 
            {/* Bottom Floating Control Bar */}
            <BottomControlBar
