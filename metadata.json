@@ -1,0 +1,6 @@
+{
+  "name": "N-Body Gravity Simulator",
+  "description": "3D WebGL N-Body gravitational physics simulator with fragment collisions, orbital predictions, customizable celestial bodies, and camera tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
