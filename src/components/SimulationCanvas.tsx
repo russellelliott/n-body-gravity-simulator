@@ -521,8 +521,7 @@ export const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
         const width = mountRef.current.clientWidth;
         const height = mountRef.current.clientHeight;
 
-        bodies.forEach(b => {
-          if (b.isFragment) return; // Skip tiny debris labels to avoid clutter
+        bodies.forEach((b) => {
           const p = new THREE.Vector3(b.position.x, b.position.y + b.radius + 1.2, b.position.z);
           p.project(camera);
 
